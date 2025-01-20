@@ -1,0 +1,114 @@
+#!/bin/bash
+
+LIGHT_BLUE="\e[38;5;81m"
+DARK_BLUE="\e[38;5;32m"
+CYAN="\e[38;5;51m"
+LIGHT_VIOLET="\e[38;5;129m"
+GREEN="\e[38;5;40m"
+SCORE="\e[38;5;46m"
+ORANGE="\e[38;5;214m"
+RED="\e[38;5;196m"
+WHITE="\e[38;5;15m"
+RESET="\e[0m"
+
+
+HIDE="\e[?25l"
+SHOW="\e[?25h"
+
+round=1
+score=0
+
+abort() {
+	echo -e "$SHOW"
+	if [[ $score -eq 0 ]]; then
+		echo -e "${RED}Game cancelled.\nYou did not even try...${RESET}\n"
+		exit 1
+	else
+		echo -e "${RED}Game cancelled.\n${GREEN}You remembered ${SCORE}$score${GREEN} numbers.${RESET}\n"
+		exit 0
+	fi
+}
+
+echo -e "$HIDE"
+
+trap abort SIGINT
+
+clear
+echo -e "\n${LIGHT_BLUE}Welcome to the ${LIGHT_VIOLET}MEMORY TEST${LIGHT_BLUE} game!${RESET}"
+echo -e "${LIGHT_BLUE}Remember the sequence of numbers and write it down.\nWith each round, it gets harder!${RESET}"
+echo -e "${DARK_BLUE}To exit the game, type 'exit'.${RESET}\n"
+echo -e "${CYAN}Press any key or wait 5s to start...${RESET}\n"
+read -n 1 -t 5 anything
+
+generate_sequence() { # TODO
+#	if true; then
+#		x=$RANDOM$RANDOM$RANDOM$RANDOM
+#		echo $x | cut -c 1-$1
+#	else
+		local sequence=""
+		for ((i = 1; i <= $1; i++)); do
+			sequence+="$((RANDOM % 10))"
+		done
+		echo "$sequence"
+#	fi
+}
+
+show_sequence() {
+	clear
+	echo -e "\n${LIGHT_VIOLET}Round: $round${RESET}\n"
+	echo -e "${CYAN}Remember the sequence:${RESET}"
+	echo -e "${ORANGE}$1${RESET}"
+	sleep $((2 + round / 2))
+}
+
+get_answer() {
+	clear
+	read -r -n99999 -t 0.001 garbage
+	read -r -n99999 -t 0.001 garbage
+	read -r -n99999 -t 0.001 garbage
+
+	echo -e "$SHOW"
+	echo -en "${CYAN}Enter the sequence:${ORANGE} "
+	read -r answer
+	echo -e "$HIDE"
+	answer=$(echo "$answer" | tr -d '[:space:]')
+}
+
+check_answer() {
+	if [[ "$1" == "$2" ]]; then
+		echo -e "${GREEN}Correct! Let's move on.${RESET}"
+		score=$((score + 1))
+		round=$((round + 1))
+		read -n 1 -t 1 something
+	elif [[ "$1" == "exit" ]]; then
+		echo -e "$SHOW"
+		if [[ $score -eq 0 ]]; then
+			echo -e "${RED}Game cancelled.\nYou did not even try...${RESET}\n"
+			exit 1
+		else
+			echo -e "${RED}Game cancelled.\n${GREEN}You remembered ${SCORE}$score${GREEN} numbers.${RESET}\n"
+			exit 0
+		fi
+	else
+		echo -e "${RED}Game over!${RESET}"
+		echo -e "${ORANGE}The sequence was: $2${RESET}"
+		echo -e "${GREEN}You remembered ${SCORE}$score${GREEN} numbers.${RESET}"
+		if [[ $score -ge 10 ]]; then
+			echo -e "${SCORE}That was impressive!${RESET}"
+		elif [[ $score -ge 25 ]]; then
+			echo -e "${SCORE}WOW! You must be a robot!${RESET}"
+		fi
+		echo -e "$SHOW"
+		exit 0
+	fi
+}
+
+while true; do
+	sequence=$(generate_sequence $round)
+
+	show_sequence "$sequence"
+
+	get_answer
+
+	check_answer "$answer" "$sequence"
+done
