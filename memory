@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Memory game made by BuriXon-code (c) 2025
+
 LIGHT_BLUE="\e[38;5;81m"
 DARK_BLUE="\e[38;5;32m"
 CYAN="\e[38;5;51m"
